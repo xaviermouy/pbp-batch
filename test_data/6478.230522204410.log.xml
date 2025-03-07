@@ -1,0 +1,117 @@
+<ST>
+<EVENT>
+<START STATE="NEW" />
+</EVENT>
+<CFG ID="0" FTYPE="xml">
+<BINFILE TIME="11:07:46" DATE="Dec  3 2021"  VER="4.0.0.6">  </BINFILE>
+</CFG>
+<EVENT>
+<START> TIM </START>
+</EVENT>
+<EVENT>
+<HARDWARE_ID> ST300 </HARDWARE_ID>
+</EVENT>
+<EVENT>
+<MSPVER> 214 </MSPVER>
+</EVENT>
+<EVENT>
+<INT_BATT UNITS="mV"> 4088 </INT_BATT>
+</EVENT>
+<EVENT>
+<EX_BATT UNITS="mV"> 22 </EX_BATT>
+</EVENT>
+<EVENT>
+<TEMPERATURE UNITS="DegCx100"> 2152 </TEMPERATURE>
+</EVENT>
+<EVENT>
+<AUDIO Gain="High" />
+</EVENT>
+<EVENT>
+<AUDIO HighPass="OFF" />
+</EVENT>
+<CFG ID="1">
+<PROC> AUDIO </PROC>
+<NCHS> 1 </NCHS>
+<BAND> HF1 </BAND>
+<FS UNIT="Hz"> 288000 </FS>
+<NBITS> 16 </NBITS>
+</CFG>
+<CFG ID="2">
+<SRC ID="1" />
+<PROC> DECM </PROC>
+<DF> 2 </DF>
+<NF> 36 </NF>
+</CFG>
+<CFG ID="3" FTYPE="X3V2">
+<SRC ID="2" />
+<BLKLEN> 16 </BLKLEN>
+<NCHS> 1 </NCHS>
+<FILTER> diff </FILTER>
+<NBITS> 16 </NBITS>
+<CODE THRESH="2"> RICE0 </CODE>
+<CODE THRESH="7"> RICE1 </CODE>
+<CODE THRESH="19"> RICE3 </CODE>
+<CODE> BFP </CODE>
+</CFG>
+<CFG ID="4" FTYPE="wav" CODEC="3">
+<SRC ID="3" />
+<FS> 144000 </FS>
+<NBITS> 16 </NBITS>
+<NCHS> 1 </NCHS>
+<SUFFIX> wav </SUFFIX>
+</CFG>
+<CFG ID="5" FTYPE="csv">
+<PROC> SEN </PROC>
+<SUFFIX> temp </SUFFIX>
+<HEADER> unix time, degrees C </HEADER>
+<PERIOD UNIT="ms"> 360000 </PERIOD>
+</CFG>
+<EVENT>
+<AUDIO RUN="1" />
+</EVENT>
+<EVENT>
+<AUDIO MUTE="0" />
+</EVENT>
+<EVENT>
+<AUDIO CAL="1" />
+</EVENT>
+<EVENT>
+<AUDIO MUTE="1" />
+</EVENT>
+<EVENT>
+<AUDIO MUTE="0" />
+</EVENT>
+<EVENT>
+<AUDIO RUN="0" />
+</EVENT>
+<EVENT>
+<END STATE="CLOSE" />
+</EVENT>
+<PROC_EVENT ID="4">
+<WavFileHandler OffloaderTimeZone="Central Standard Time"/>
+</PROC_EVENT>
+<PROC_EVENT ID="4">
+<WavFileHandler SamplingStartTimeLocal="2023-05-22T20:44:11"/>
+</PROC_EVENT>
+<PROC_EVENT ID="4">
+<WavFileHandler SamplingStopTimeLocal="2023-05-22T21:04:11"/>
+</PROC_EVENT>
+<PROC_EVENT ID="4">
+<WavFileHandler SamplingStartTimeUTC="2023-05-23T02:44:11"/>
+</PROC_EVENT>
+<PROC_EVENT ID="4">
+<WavFileHandler SamplingStopTimeUTC="2023-05-23T03:04:11"/>
+</PROC_EVENT>
+<PROC_EVENT ID="4">
+<WavFileHandler SamplingStartTimeSubS="80871 us"/>
+</PROC_EVENT>
+<PROC_EVENT ID="4">
+<WavFileHandler SamplingTimePeriod="1199953408 us"/>
+</PROC_EVENT>
+<PROC_EVENT ID="4">
+<WavFileHandler CumulativeSamplingGap="-29512 us"/>
+</PROC_EVENT>
+<PROC_EVENT ID="4">
+<WavFileHandler SampleCount="172805024"/>
+</PROC_EVENT>
+</ST>
