@@ -1,6 +1,8 @@
 
 import sys
-import pbp.main_meta_generator
+from argparse import Namespace
+#import pbp.main_meta_generator
+from pbp.main_meta_generator import run_main_meta_generator
 import pbp.main_hmb_generator
 import yaml
 import os
@@ -90,20 +92,17 @@ def load_yaml_file(yaml_file):
     return config
 
 def run_pbp_meta_gen(recorder=None,uri=None,output_dir=None,json_base_dir=None,xml_dir=None,start=None,end=None,prefix=None):
-    # Simulate command-line arguments
-    sys.argv = [
-        "main_meta_generator.py",
-        "--recorder", recorder,
-        "--uri", uri,
-        "--output-dir", output_dir,
-        "--json-base-dir", json_base_dir,
-        "--xml-dir", xml_dir,
-        "--start", start,
-        "--end", end,
-        "--prefix", prefix
-    ]
-    # Call main function
-    pbp.main_meta_generator.main()
+    args ={
+        "recorder": recorder,
+        "uri": uri,
+        "output_dir": output_dir,
+        "json_base_dir": json_base_dir,
+        "xml_dir": xml_dir,
+        "start": start,
+        "end": end,
+        "prefix":[prefix]
+    }
+    run_main_meta_generator(Namespace(**args))
 
 def run_pbp_hmd_gen(json_base_dir=None,audio_base_dir=None,date=None,output_dir=None,prefix=None,sensitivity_uri=None,sensitivity_flat_value=None,voltage_multiplier=None,subset_to=None,global_attrs=None,variable_attrs=None):
     # Simulate command-line arguments
