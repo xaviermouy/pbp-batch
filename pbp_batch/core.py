@@ -1,13 +1,19 @@
-
-import sys
-from argparse import Namespace
-#import pbp.main_meta_generator
-from pbp.main_meta_generator import run_main_meta_generator
-import pbp.main_hmb_generator
 import yaml
 import os
 from pathlib import Path
 from datetime import datetime, timedelta
+import argparse
+from argparse import Namespace
+from pbp.main_meta_generator import run_main_meta_generator
+from pbp.main_hmb_generator import run_main_hmb_generator
+from pbp.main_plot import run_main_plot
+from pbp.plot_const import (
+    DEFAULT_DPI,
+    DEFAULT_LAT_LON_FOR_SOLPOS,
+    DEFAULT_TITLE,
+    DEFAULT_YLIM,
+    DEFAULT_CMLIM,
+)
 
 def format_path(path):
     p = Path(path)
@@ -89,6 +95,9 @@ def load_yaml_file(yaml_file):
         config['pbp_job_agent']['voltage_multiplier'] = None
     config['pbp_job_agent']['output_prefix'] = config['pbp_job_agent']['output_prefix'] if config['pbp_job_agent']['output_prefix'].endswith('_') else s + '_'
     config['pbp_job_agent']['subset_to'] = [int(num) for num in config['pbp_job_agent']['subset_to'].split()]
+    config['pbp_job_agent']['latlon'] = tuple(map(float, config['pbp_job_agent']['latlon'].split()))
+    config['pbp_job_agent']['cmlim'] = tuple(map(float, config['pbp_job_agent']['cmlim'].split()))
+    config['pbp_job_agent']['ylim'] = tuple(map(float, config['pbp_job_agent']['ylim'].split()))
     return config
 
 def run_pbp_meta_gen(recorder=None,uri=None,output_dir=None,json_base_dir=None,xml_dir=None,start=None,end=None,prefix=None):
@@ -106,30 +115,43 @@ def run_pbp_meta_gen(recorder=None,uri=None,output_dir=None,json_base_dir=None,x
 
 def run_pbp_hmd_gen(json_base_dir=None,audio_base_dir=None,date=None,output_dir=None,prefix=None,sensitivity_uri=None,sensitivity_flat_value=None,voltage_multiplier=None,subset_to=None,global_attrs=None,variable_attrs=None):
     # Simulate command-line arguments
-    sys.argv = [
-        "main_hmd_generator.py",
-        "--json-base-dir", json_base_dir,
-        "--audio-base-dir", audio_base_dir,
-        "--date", date,
-        "--output-dir", output_dir,
-        "--output-prefix", prefix,
-        "--global-attrs", global_attrs,
-        "--variable-attrs", variable_attrs,
-    ]
-    # add subset
-    tmp = ["--subset-to"]
-    for freq in subset_to:
-        tmp.append(str(freq))
-    sys.argv = sys.argv + tmp
+    args = {
+        "json_base_dir": json_base_dir,
+        "audio_base_dir": audio_base_dir,
+        "date": date,
+        "output_dir": output_dir,
+        "output_prefix": prefix,
+        "global_attrs": global_attrs,
+        "variable_attrs": variable_attrs,
+        "subset_to": None,
+        "sensitivity_flat_value": None,
+        "sensitivity_uri": None,
+        "voltage_multiplier": None,
+        "s3_unsigned": False,
+        "s3": False,
+        "gs": False,
+        "assume_downloaded_files": False,
+        "retain_downloaded_files": False,
+        "max_segments":float(0),
+        "audio_path_map_prefix": "",
+        "audio_path_prefix": "",
+        "compress_netcdf": False,
+        "add_quality_flag": False,
+    }
+    args['download_dir'] = None
+    args['set_global_attrs'] = None
     # add optional argument if needed
     if sensitivity_flat_value is not None:
-        sys.argv = sys.argv + ["--sensitivity-flat-value", sensitivity_flat_value]
+        args['sensitivity_flat_value'] = float(sensitivity_flat_value)
     if sensitivity_uri is not None:
-        sys.argv = sys.argv + ["--sensitivity-uri", sensitivity_uri]
+        args['sensitivity_uri'] = sensitivity_uri
     if voltage_multiplier is not None:
-        sys.argv = sys.argv + ["--voltage-multiplier", voltage_multiplier]
+        args['voltage_multiplier'] = float(voltage_multiplier)
+    if subset_to is not None:
+        args['subset_to'] = subset_to
+
     # Call main function
-    pbp.main_hmb_generator.main()
+    run_main_hmb_generator(Namespace(**args))
 
 def run_pbp_hmd_gen_batch(json_base_dir=None,audio_base_dir=None,start=None,end=None,output_dir=None,prefix=None,sensitivity_uri=None,sensitivity_flat_value=None,voltage_multiplier=None,subset_to=None,global_attrs=None,variable_attrs=None):
     # loop through each day of the deployment
@@ -137,6 +159,7 @@ def run_pbp_hmd_gen_batch(json_base_dir=None,audio_base_dir=None,start=None,end=
     delta = timedelta(days=1)
     start_date = datetime.strptime(start, date_format)
     end_date = datetime.strptime(end, date_format)
+
     # iterate over range of dates
     while (start_date <= end_date):
         date_str = start_date.strftime(date_format)
@@ -155,10 +178,26 @@ def run_pbp_hmd_gen_batch(json_base_dir=None,audio_base_dir=None,start=None,end=
             variable_attrs=variable_attrs
         )
         start_date += delta
+def run_pbp_main_plot(netcdf_dir,latlon=DEFAULT_LAT_LON_FOR_SOLPOS, title=f"'{DEFAULT_TITLE}'", ylim=DEFAULT_YLIM, cmlim=DEFAULT_CMLIM, dpi=DEFAULT_DPI, show=False, only_show=False, engine="h5netcdf"):
+    nc_files_path_list = list(Path(netcdf_dir).rglob("*.nc"))
+    nc_files_str_list = [str(p) for p in nc_files_path_list]
+    args = {
+        "latlon":latlon,
+        "title": title,
+        "ylim": ylim,
+        "cmlim": cmlim,
+        "dpi": dpi,
+        "show": show,
+        "only_show": only_show,
+        "engine": engine,
+        "netcdf": nc_files_str_list
+    }
+    run_main_plot(Namespace(**args))
 
-def main():
+
+def submit_job(yaml_file=None):
     # load config parameters from YAML file
-    yaml_file = r"C:\Users\xavier.mouy\Documents\Projects\2025_Galapagos\processing_outputs\WHOI_Galapagos_202305_Caseta\6478\pypam\META\globalAttributes_WHOI_Galapagos_202305_Caseta.yaml"
+    #yaml_file = r"C:\Users\xavier.mouy\Documents\Projects\2025_Galapagos\processing_outputs\WHOI_Galapagos_202305_Caseta\6478\pypam\META\globalAttributes_WHOI_Galapagos_202305_Caseta.yaml"
     config = load_yaml_file(yaml_file)
 
     # create GlobalAttribute file that PBP understands
@@ -192,11 +231,18 @@ def main():
         variable_attrs=config['pbp_job_agent']['variable_attrs'],
     )
 
+    # Make daily plots
+    run_pbp_main_plot(
+        netcdf_dir=config['pbp_job_agent']['nc_output_dir'],
+        latlon= config['pbp_job_agent']['latlon'],
+        title=config['pbp_job_agent']['title'] ,
+        ylim= config['pbp_job_agent']['ylim'],
+        cmlim= config['pbp_job_agent']['cmlim'],
+    )
 
-
-    print('stop')
-
-
-
-if __name__ == "__main__":
-    main()
+    # TO DO:
+    # - add error function if
+    #   - drives don't exist,
+    #   - json files are not created
+    #   - nc files not present
+    # - skip if .nc file or png file already exist

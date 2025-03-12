@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pbp-batch"
+version = "0.0.1"
+description = "Running mbari-pbp library for full deployments"
+authors = [
+    { name = "Xavier Mouy", email = "xavier.mouy@whoi.edu" }
+]
+license = { text = "BSD-3-Clause" }
+requires-python = ">=3.9" 
+dependencies = [
+    "mbari-pbp==1.6.3",
+    "prefect",
+]
+
+[project.scripts]
+pbp-batch = "pbp_batch.cli:main"
