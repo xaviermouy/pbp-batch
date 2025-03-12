@@ -14,7 +14,7 @@ def main():
     # Run command
     run_parser = subparsers.add_parser("submit_job", help="Run pbp-batch processing")
     run_parser.add_argument(
-        "-y", "--yaml_file",
+        "yaml_file",
         type=Path,
         default=None,
         help="Path to the YAML configuration file."
