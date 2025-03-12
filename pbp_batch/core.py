@@ -25,7 +25,7 @@ def format_path(path):
     # Convert to Windows-style path
     return str(p.as_posix()).replace('/', '\\') if os.name == 'nt' else str(p)
 
-@task
+#@task
 def write_pbp_glabalAttributes_file(config):
     yaml_template = {
         "title": "",
@@ -74,7 +74,7 @@ def write_pbp_glabalAttributes_file(config):
 
     print(f"Generated YAML saved to: {output_file}")
 
-@task
+#@task
 def load_yaml_file(yaml_file):
     with open(yaml_file, "r") as file:
         config = yaml.safe_load(file)
@@ -107,7 +107,7 @@ def load_yaml_file(yaml_file):
     config['pbp_job_agent']['ylim'] = tuple(map(float, config['pbp_job_agent']['ylim'].split()))
     return config
 
-@task
+#@task
 def run_pbp_meta_gen(recorder=None,uri=None,output_dir=None,json_base_dir=None,xml_dir=None,start=None,end=None,prefix=None):
     args ={
         "recorder": recorder,
@@ -121,7 +121,7 @@ def run_pbp_meta_gen(recorder=None,uri=None,output_dir=None,json_base_dir=None,x
     }
     run_main_meta_generator(Namespace(**args))
 
-@task
+#@task
 def run_pbp_hmd_gen(json_base_dir=None,audio_base_dir=None,date=None,output_dir=None,prefix=None,sensitivity_uri=None,sensitivity_flat_value=None,voltage_multiplier=None,subset_to=None,global_attrs=None,variable_attrs=None):
     # Simulate command-line arguments
     args = {
@@ -162,7 +162,7 @@ def run_pbp_hmd_gen(json_base_dir=None,audio_base_dir=None,date=None,output_dir=
     # Call main function
     run_main_hmb_generator(Namespace(**args))
 
-@task
+#@task
 def run_pbp_hmd_gen_batch(json_base_dir=None,audio_base_dir=None,start=None,end=None,output_dir=None,prefix=None,sensitivity_uri=None,sensitivity_flat_value=None,voltage_multiplier=None,subset_to=None,global_attrs=None,variable_attrs=None):
     # loop through each day of the deployment
     date_format = "%Y%m%d"
@@ -189,12 +189,12 @@ def run_pbp_hmd_gen_batch(json_base_dir=None,audio_base_dir=None,start=None,end=
         )
         start_date += delta
 
-@task
+#@task
 def run_pbp_main_plot(netcdf_dir,latlon=DEFAULT_LAT_LON_FOR_SOLPOS, title=f"'{DEFAULT_TITLE}'", ylim=DEFAULT_YLIM, cmlim=DEFAULT_CMLIM, dpi=DEFAULT_DPI, show=False, only_show=False, engine="h5netcdf"):
     nc_files_path_list = list(Path(netcdf_dir).rglob("*.nc"))
     nc_files_str_list = [str(p) for p in nc_files_path_list]
     args = {
-        "latlon":latlon,
+        "latlon": latlon,
         "title": title,
         "ylim": ylim,
         "cmlim": cmlim,
@@ -206,13 +206,13 @@ def run_pbp_main_plot(netcdf_dir,latlon=DEFAULT_LAT_LON_FOR_SOLPOS, title=f"'{DE
     }
     run_main_plot(Namespace(**args))
 
-@flow
+#@flow
 def submit_job(yaml_file: str):
     # load config parameters from YAML file
     #yaml_file = r"C:\Users\xavier.mouy\Documents\Projects\2025_Galapagos\processing_outputs\WHOI_Galapagos_202305_Caseta\6478\pypam\META\globalAttributes_WHOI_Galapagos_202305_Caseta.yaml"
     config = load_yaml_file(yaml_file)
 
-    # create GlobalAttribute file that PBP understands
+    # # create GlobalAttribute file that PBP understands
     new_global_attrs_filename = write_pbp_glabalAttributes_file(config)
 
     # Generate meta data
@@ -257,4 +257,5 @@ def submit_job(yaml_file: str):
     #   - drives don't exist,
     #   - json files are not created
     #   - nc files not present
-    # - skip if .nc file or png file already exist
+    # - skip if .nc file or png file already exist (add option --force)
+    # - Make temp globalvars.yaml filename unique
