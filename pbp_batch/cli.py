@@ -1,4 +1,5 @@
 import argparse
+import sys
 from pathlib import Path
 from pbp_batch.core import submit_job
 
@@ -10,6 +11,12 @@ def cli_args_parser():
         default=None,
         help="Path to the YAML configuration file. If not provided, a default config will be used."
     )
+    
+    # Display help if no arguments are provided    
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+    
     args = parser.parse_args()
     if args.yaml_file and not args.yaml_file.exists():
         print(f"Error: The file '{args.yaml_file}' does not exist.")

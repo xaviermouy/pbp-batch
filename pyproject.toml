@@ -16,5 +16,8 @@ dependencies = [
     "prefect",
 ]
 
+[tool.setuptools]
+packages = ["pbp_batch"]
+
 [project.scripts]
 pbp-batch = "pbp_batch.cli:main"
