@@ -7,14 +7,15 @@ from argparse import Namespace
 from pbp.main_meta_generator import run_main_meta_generator
 from pbp.main_hmb_generator import run_main_hmb_generator
 from pbp.main_plot import run_main_plot
-from pbp.plot_const import (
-    DEFAULT_DPI,
-    DEFAULT_LAT_LON_FOR_SOLPOS,
-    DEFAULT_TITLE,
-    DEFAULT_YLIM,
-    DEFAULT_CMLIM,
-)
-from prefect import flow, task
+#from pbp.plotting import plot_dataset_summary
+import xarray as xr
+import matplotlib
+#from pbp.simpleapi import HmbGen
+import pandas as pd
+import matplotlib.pyplot as plt
+from multiprocessing import Process
+
+#from prefect import flow, task
 #from prefect.server.schemas.schedules import IntervalSchedule
 from datetime import timedelta
 
@@ -23,7 +24,7 @@ def format_path(path):
     # Convert to Windows-style path
     return str(p.as_posix()).replace('/', '\\') if os.name == 'nt' else str(p)
 
-@task(retries=5, retry_delay_seconds=20, name='Write temp. YAML file')
+#@task(retries=5, retry_delay_seconds=20, name='Write temp. YAML file')
 def write_pbp_glabalAttributes_file(config):
     yaml_template = {
         "title": "",
@@ -61,7 +62,7 @@ def write_pbp_glabalAttributes_file(config):
 
     # write GlobalAttribute file for pbp
     orig_file_name = config['pbp_job_agent']['variable_attrs_orig']
-    output_file = os.path.join(os.path.dirname(orig_file_name),'globalAttributes_pbp.yaml')
+    output_file = os.path.join(os.path.dirname(orig_file_name),config['pbp_job_agent']['output_prefix'] + 'globalAttributes_pbp.yaml')
     with open(output_file, "w") as file:
         yaml.dump(yaml_template, file, default_flow_style=False, sort_keys=False)
     if os.name == "nt":
@@ -72,7 +73,7 @@ def write_pbp_glabalAttributes_file(config):
 
     print(f"Generated YAML saved to: {output_file}")
 
-@task(retries=5, retry_delay_seconds=5, name="Load YAML file")
+#@task(retries=5, retry_delay_seconds=5, name="Load YAML file")
 def load_yaml_file(yaml_file):
     #yaml_file = str(yaml_file)
     with open(yaml_file, "r") as file:
@@ -106,7 +107,7 @@ def load_yaml_file(yaml_file):
     config['pbp_job_agent']['ylim'] = tuple(map(float, config['pbp_job_agent']['ylim'].split()))
     return config
 
-@task(retries=5, retry_delay_seconds=5, name="PBP MetaGen")
+#@task(retries=5, retry_delay_seconds=5, name="PBP MetaGen")
 def run_pbp_meta_gen(recorder=None,uri=None,output_dir=None,json_base_dir=None,xml_dir=None,start=None,end=None,prefix=None):
     args ={
         "recorder": recorder,
@@ -120,7 +121,7 @@ def run_pbp_meta_gen(recorder=None,uri=None,output_dir=None,json_base_dir=None,x
     }
     run_main_meta_generator(Namespace(**args))
 
-@task(retries=5, retry_delay_seconds=10, name="PBP HMD Gen daily")
+#@task(retries=5, retry_delay_seconds=10, name="PBP HMD Gen daily")
 def run_pbp_hmd_gen(json_base_dir=None,audio_base_dir=None,date=None,output_dir=None,prefix=None,sensitivity_uri=None,sensitivity_flat_value=None,voltage_multiplier=None,subset_to=None,global_attrs=None,variable_attrs=None):
     # Simulate command-line arguments
     args = {
@@ -161,7 +162,7 @@ def run_pbp_hmd_gen(json_base_dir=None,audio_base_dir=None,date=None,output_dir=
     # Call main function
     run_main_hmb_generator(Namespace(**args))
 
-@task(retries=5, retry_delay_seconds=10, name="PBP HMD Gen deployment")
+#@task(retries=5, retry_delay_seconds=10, name="PBP HMD Gen deployment")
 def run_pbp_hmd_gen_batch(json_base_dir=None,audio_base_dir=None,start=None,end=None,output_dir=None,prefix=None,sensitivity_uri=None,sensitivity_flat_value=None,voltage_multiplier=None,subset_to=None,global_attrs=None,variable_attrs=None):
     # loop through each day of the deployment
     date_format = "%Y%m%d"
@@ -188,14 +189,17 @@ def run_pbp_hmd_gen_batch(json_base_dir=None,audio_base_dir=None,start=None,end=
         )
         start_date += delta
 
-@task(retries=5, retry_delay_seconds=5, name="PBP daily plots")
-def run_pbp_main_plot(netcdf_dir,latlon=DEFAULT_LAT_LON_FOR_SOLPOS, title=f"'{DEFAULT_TITLE}'", ylim=DEFAULT_YLIM, cmlim=DEFAULT_CMLIM, dpi=DEFAULT_DPI, show=False, only_show=False, engine="h5netcdf"):
-    import matplotlib
-    import matplotlib.pyplot as plt
-    matplotlib.use('Agg')
-    plt.close('all')
-    plt.show(block=True)
+#@task(retries=5, retry_delay_seconds=5, name="PBP daily plots")
+#def run_pbp_main_plot(netcdf_dir,latlon=DEFAULT_LAT_LON_FOR_SOLPOS, title=f"'{DEFAULT_TITLE}'", ylim=DEFAULT_YLIM, cmlim=DEFAULT_CMLIM, dpi=DEFAULT_DPI, show=False, only_show=False, engine="h5netcdf"):
+def run_pbp_main_plot(netcdf_dir, latlon=None, title="", ylim=0,cmlim=None, dpi=100, show=False, only_show=False, engine="h5netcdf"):
 
+    # Reset plotting overrides set in pypam
+    # (these cause the PBP plot_dataset_summary function to fail
+    # https://github.com/mbari-org/pbp/issues/21#issuecomment-2261642486)
+    plt.rcParams.update({"text.usetex": False})
+    pd.plotting.deregister_matplotlib_converters()
+
+    # List nc files
     nc_files_path_list = list(Path(netcdf_dir).rglob("*.nc"))
     nc_files_str_list = [str(p) for p in nc_files_path_list]
     args = {
@@ -211,10 +215,8 @@ def run_pbp_main_plot(netcdf_dir,latlon=DEFAULT_LAT_LON_FOR_SOLPOS, title=f"'{DE
     }
     run_main_plot(Namespace(**args))
 
-@flow(name='pbp-job')
-def submit_job(yaml_file: Path):
+def process_dataset(yaml_file: Path):
     # load config parameters from YAML file
-    #yaml_file = r"C:\Users\xavier.mouy\Documents\Projects\2025_Galapagos\processing_outputs\WHOI_Galapagos_202305_Caseta\6478\pypam\META\globalAttributes_WHOI_Galapagos_202305_Caseta.yaml"
     config = load_yaml_file(yaml_file)
 
     # # create GlobalAttribute file that PBP understands
@@ -241,8 +243,8 @@ def submit_job(yaml_file: Path):
         output_dir=config['pbp_job_agent']['nc_output_dir'],
         prefix=config['pbp_job_agent']['output_prefix'],
         sensitivity_uri=config['pbp_job_agent']['sensitivity_uri'],
-        sensitivity_flat_value = config['pbp_job_agent']['sensitivity_flat_value'],
-        voltage_multiplier = config['pbp_job_agent']['voltage_multiplier'],
+        sensitivity_flat_value=config['pbp_job_agent']['sensitivity_flat_value'],
+        voltage_multiplier=config['pbp_job_agent']['voltage_multiplier'],
         subset_to=config['pbp_job_agent']['subset_to'],
         global_attrs=new_global_attrs_filename,
         variable_attrs=config['pbp_job_agent']['variable_attrs'],
@@ -251,11 +253,29 @@ def submit_job(yaml_file: Path):
     # Make daily plots
     run_pbp_main_plot(
         netcdf_dir=config['pbp_job_agent']['nc_output_dir'],
-        latlon= config['pbp_job_agent']['latlon'],
-        title=config['pbp_job_agent']['title'] ,
-        ylim= config['pbp_job_agent']['ylim'],
-        cmlim= config['pbp_job_agent']['cmlim'],
+        latlon=config['pbp_job_agent']['latlon'],
+        title=config['pbp_job_agent']['title'],
+        ylim=config['pbp_job_agent']['ylim'],
+        cmlim=config['pbp_job_agent']['cmlim'],
     )
+
+
+#@flow(name='pbp-job')
+def submit_job(yaml_files: list[Path]):
+    
+    # Define multiple processes
+    processes = []
+    for i, yaml_file in enumerate(yaml_files):  # Creating one process per dataset
+        p = Process(target=process_dataset, args=(yaml_file,))
+        processes.append(p)
+        p.start()  # Start each process
+
+    # Wait for all processes to finish
+    for p in processes:
+        p.join()
+
+
+
 
     # TO DO:
     # - add error function if

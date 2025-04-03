@@ -14,10 +14,11 @@ def main():
     # Run command
     run_parser = subparsers.add_parser("submit_job", help="Run pbp-batch processing")
     run_parser.add_argument(
-        "yaml_file",
+        "yaml_files",
         type=Path,
         default=None,
-        help="Path to the YAML configuration file."
+        nargs="+",
+        help="Path to the YAML configuration files."
     )
 
     # Deploy command
@@ -26,10 +27,11 @@ def main():
     args = parser.parse_args()
 
     if args.command == "submit_job":
-        if args.yaml_file and not args.yaml_file.exists():
-            print(f"Error: The file '{args.yaml_file}' does not exist.")
-            exit(1)
-        pbp_batch.core.submit_job(args.yaml_file)
+        for yaml_file in args.yaml_files:
+            if yaml_file and not yaml_file.exists():
+                print(f"Error: The file '{yaml_file}' does not exist.")
+                exit(1)
+        pbp_batch.core.submit_job(args.yaml_files)
 
     elif args.command == "deploy":
         create_deployment()  # Run the Prefect deployment
