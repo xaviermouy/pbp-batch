@@ -24,3 +24,6 @@ Use `pbp_batch submit_job` followed by the path to the YAML files to process (se
 pbp_batch submit_job "C:\pbp_test_dataset\globalAttributes_file_1.yaml" "C:\pbp_test_dataset\globalAttributes_file_2.yaml"
 ```
 
+## Versions
+
+- v0.0.1 (2025-04-03): Initial version
