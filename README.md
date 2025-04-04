@@ -3,6 +3,7 @@
 Wrapper for the mbari-pbp allowing to create metadata files, HMD computation, and daily plots for each deployment. Supports multiprocessing.
 
 ## Installation
+Recommended environment: python 3.11
 
 To install the latest version:
 
