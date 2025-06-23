@@ -10,12 +10,17 @@ authors = [
     { name = "Xavier Mouy", email = "xavier.mouy@whoi.edu" }
 ]
 license = { text = "BSD-3-Clause" }
-requires-python = ">=3.9" 
+requires-python = "==3.11" 
 dependencies = [
     "mbari-pbp==1.6.3",
     "prefect",
+	"soundfile",
 ]
 
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
 [tool.setuptools]
 packages = ["pbp_batch"]
 

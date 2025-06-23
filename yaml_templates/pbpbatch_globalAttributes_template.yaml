@@ -1,0 +1,65 @@
+---
+title: >-
+    Hybrid Millidecade Band Sound Pressure Levels Computed at 1 Minute Resolution from Oceanic Passive Acoustic Monitoring Recordings
+Summary: >- 
+    To understand natural and anthropogenic sound in the ocean, and to compare underwater soundscapes globally, standard methods of analysis must be applied to passive acoustic monitoring (PAM) data. Methods that balance constrained volume and adequate resolution of acoustic spectra have recently been published (Martin et al., 2021a,b). A community effort supported by NOAA, BOEM, U.S. Navy, and ONR was initiated to apply these methods to PAM datasets from around the world. This record represents the hybrid millidecade band (HMB) spectra of sound levels derived from calibrated PAM data.
+Conventions: COARDS, CF-1.6, ACDD-1.3
+keywords: >-
+  oceans, ocean acoustics, ambient noise, intensity, marine environment monitoring,
+  marine habitat, sound_intensity_level_in_water, soundscapes
+keywords_vocabulary: GCMD Science Keywords
+history: >- 
+  Original hybrid millidecade spectra were produced by the NOAA Northeast Fisheries Science Center. 
+source: >-
+  Data analysis was performed using Python Passive Acoustic Monitoring (PyPAM) software, version {{PyPAM_version}}, to produce hybrid millidecade band (HMB) spectra of sound levels from oceanic audio recordings.  Processing followed the methods defined in Martin et al. (2021a,b).  Input wav data were computed to µPa, and power spectral density (PSD) levels were computed from 1-minute segments of audio data using Welch's method.  By applying fast Fourier transform (FFT) with length equal to the sample rate, using Hann window and 50% overlap, PSD estimates (µPa^2/Hz) were computed with a frequency resolution of 1 Hz and a temporal resolution of 1 second. The 119 PSD estimates from each 1-minute segment were averaged, and the average spectrum for each minute was further processed to an HMB spectrum following Martin et al. (2021b). 
+  PSD estimates (V^2/Hz) for each 1-minute segment processed to an HMB spectrum following Martin et al. and then each 1-minute spectrum (dB re V^2/Hz) was calibrated using the frequency-dependent hydrophone sensitivity (dB re V/µPa) data to obtain calibrated PSD (dB re 1 µPa^2/Hz).
+acknowledgement: >- #UPDATE TO ACKNOWLEDGE ALL ORGANIZATIONS WHO SUPPORTED DATA COLLECTION. 
+  Data products and hydrophone deployment were supported by NOAA Northeast Fisheries Science Center and partners
+license: CC 4.0
+standard_name_vocabulary: CF Standard Name Table v80
+date_created: 20250320
+creator_name:  Xavier Mouy
+creator_email: xavier.mouy@whoi.edu
+creator_url: https://www2.whoi.edu/staff/xaviermouy
+institution: Woods Hole Oceanographic Institution
+project: https://www.fisheries.noaa.gov/contact-directory/northeast-passive-acoustics-branch
+publisher_name: NOAA National Centers for Environmental Information
+publisher_email: pad.info@noaa.gov
+publisher_url: https://www.ncei.noaa.gov/products/passive-acoustic-data
+geospatial_bounds: POINT (42.50934 -67.47965) # Longitude and Latitude
+comment: Water depth at the recording site is 107m
+time_coverage_start: 20220519
+time_coverage_end: 20221111
+time_coverage_duration: P1D
+time_coverage_resolution: P60S
+platform: NEFSC_GOM_202205_USTR05
+instrument: ST600
+cdm_data_type: TimeSeries
+references: >-
+  Computation of single-sided mean-square sound pressure spectral density with 1 Hz resolution
+  followed ISO 18405 3.1.3.13 (International Standard ISO 18405:2017(E), Underwater Acoustics – Terminology.  Geneva: ISO).
+  Hybrid millidecade band processing followed Martin et al. (2021a,b:  https://doi.org/10.1121/10.0003324;
+  https://doi.org/10.1121/10.0005818)
+
+pbp_job_agent:
+  output_prefix: "NEFSC_GOM_202205_USTR05_" #FILENAME PREFIX 
+  recorder: "SOUNDTRAP" #RECORDER TYPE
+  audio_base_dir: "Y:/bottom_mounted/NEFSC_GOM/NEFSC_GOM_202205_USTR05/6554_48kHz_UTC" #PATH TO WAV FILES 
+  json_base_dir: "Z:/PYTHON_SOUNDSCAPE_PYPAM/Raw/NEFSC_GOM/NEFSC_GOM_202205_USTR05/JSON" #PATH TO PBP TIMEKEEPING METADATA OUTPUT
+  xml_dir: "Y:/bottom_mounted/NEFSC_GOM/NEFSC_GOM_202205_USTR05/6554_LOG-and-SUD" #PATH TO XML LOG FILES. BLANK FOR NRS ""
+  start: "20220519" #START DATE 
+  end: "20220525" #END DATE
+  prefix: "6554" #SOUNDTRAP SERIAL NUMBER or NRS Site (NRSXX)
+  nc_output_dir: "Z:/PYTHON_SOUNDSCAPE_PYPAM/Raw/NEFSC_GOM/NEFSC_GOM_202205_USTR05/NC" #PATH TO NETCDF OUTPUT
+  global_attrs: "Z:/PYTHON_SOUNDSCAPE_PYPAM/Raw/NEFSC_GOM/NEFSC_GOM_202205_USTR05/META/globalAttributes_NEFSC_GOM_202205_USTR05.yaml" #PATH TO THIS GLOBAL ATTRIBUTE METADATA FILE
+  variable_attrs: "Z:/PYTHON_SOUNDSCAPE_PYPAM/Raw/NEFSC_GOM/NEFSC_GOM_202205_USTR05/META/variableAttributes_NEFSC_GOM_202205_USTR05.yaml" # PATH TO VARIABLE ATTRIBUTE METADATA FILE
+  sensitivity_flat_value: "175.9" # SOUNDTRAP SENSITIVITY CALIBRATION VALUE. BLANK FOR NRS
+  subset_to: "10 24000" #LOWER AND UPPER FREQUENCY LIMITS FOR HMD CALCULATION IN HZ "LOWER UPPER"
+  latlon: "42.50934 -67.47965" #DECIMAL DEGREE LAT LONG
+  title: "NEFSC_GOM_202205_USTR05" #TITLE FOR PLOT. NRS eg "NRSXX_YYYY-YYYY"
+  cmlim: "50 105" #LOWER AND UPPER LIMITS FOR HMD PLOT COLOR SCALE
+  ylim: "10 24000" #FREQUENCY LIMITS FOR PLOT in HZ "LOWER UPPER"
+  meta_output_dir: "Z:/PYTHON_SOUNDSCAPE_PYPAM/Raw/NEFSC_GOM/NEFSC_GOM_202205_USTR05/JSON" #PATH TO JSON OUTPUT FOLDER
+  voltage_multiplier: "" # Pre-Amp voltage multiplier for NRS. BLANK FOR SOUNDTRAP ""
+  sensitivity_uri: "" # PATH TO NRS SENSITIVITY NC FILE. BLANK FOR SOUNDTRAP ""
+  log_dir: "Z:/PYTHON_SOUNDSCAPE_PYPAM/Raw/NEFSC_GOM/NEFSC_GOM_202205_USTR05/JOB_AGENT_LOGS" #PATH TO JOB AGENT LOGS OUTPUT FOLDER
