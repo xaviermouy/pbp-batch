@@ -52,6 +52,27 @@ To process multiple deployments in parallel, provide multiple YAML files separat
 pbp-batch submit_job "C:\pbp_test_dataset\globalAttributes_file_1.yaml" "C:\pbp_test_dataset\globalAttributes_file_2.yaml"
 ```
 
+#### Optional arguments
+
+| Argument | Default | Description |
+|---|---|---|
+| `--no-compress-netcdf` | compression on | Disable NetCDF compression |
+| `--no-quality-flag` | flag on | Disable the quality flag variable in the NetCDF output |
+| `--exclude-tone-calibration <seconds>` | `None` | Number of seconds to exclude from the beginning of each audio file (e.g. to skip a tone calibration signal) |
+
+Examples:
+
+```bash
+# Disable quality flag
+pbp-batch submit_job "C:\pbp_test_dataset\globalAttributes_file_1.yaml" --no-quality-flag
+
+# Skip the first 10 seconds of each audio file (tone calibration)
+pbp-batch submit_job "C:\pbp_test_dataset\globalAttributes_file_1.yaml" --exclude-tone-calibration 10
+
+# Combine multiple options
+pbp-batch submit_job "C:\pbp_test_dataset\globalAttributes_file_1.yaml" --no-compress-netcdf --no-quality-flag --exclude-tone-calibration 10
+```
+
 ## Versions
 
 | pbp-batch | mbari-pbp | Python | Notes |

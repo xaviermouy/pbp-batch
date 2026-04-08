@@ -123,7 +123,7 @@ def run_pbp_meta_gen(recorder=None,uri=None,output_dir=None,json_base_dir=None,s
     run_main_meta_generator(Namespace(**args))
 
 #@task(retries=5, retry_delay_seconds=10, name="PBP HMD Gen daily")
-def run_pbp_hmd_gen(json_base_dir=None,audio_base_dir=None,date=None,output_dir=None,prefix=None,sensitivity_uri=None,sensitivity_flat_value=None,voltage_multiplier=None,subset_to=None,global_attrs=None,variable_attrs=None):
+def run_pbp_hmd_gen(json_base_dir=None,audio_base_dir=None,date=None,output_dir=None,prefix=None,sensitivity_uri=None,sensitivity_flat_value=None,voltage_multiplier=None,subset_to=None,global_attrs=None,variable_attrs=None,compress_netcdf=True,add_quality_flag=True,exclude_tone_calibration=None):
     # Simulate command-line arguments
     args = {
         "json_base_dir": json_base_dir,
@@ -145,9 +145,9 @@ def run_pbp_hmd_gen(json_base_dir=None,audio_base_dir=None,date=None,output_dir=
         "max_segments":float(0),
         "audio_path_map_prefix": "",
         "audio_path_prefix": "",
-        "compress_netcdf": False,
-        "add_quality_flag": False,
-        "exclude_tone_calibration": None,
+        "compress_netcdf": compress_netcdf,
+        "add_quality_flag": add_quality_flag,
+        "exclude_tone_calibration": exclude_tone_calibration,
         "input_file": None,
         "timestamp_pattern": None,
         "time_resolution": None,
@@ -168,7 +168,7 @@ def run_pbp_hmd_gen(json_base_dir=None,audio_base_dir=None,date=None,output_dir=
     run_main_hmb_generator(Namespace(**args))
 
 #@task(retries=5, retry_delay_seconds=10, name="PBP HMD Gen deployment")
-def run_pbp_hmd_gen_batch(json_base_dir=None,audio_base_dir=None,start=None,end=None,output_dir=None,prefix=None,sensitivity_uri=None,sensitivity_flat_value=None,voltage_multiplier=None,subset_to=None,global_attrs=None,variable_attrs=None):
+def run_pbp_hmd_gen_batch(json_base_dir=None,audio_base_dir=None,start=None,end=None,output_dir=None,prefix=None,sensitivity_uri=None,sensitivity_flat_value=None,voltage_multiplier=None,subset_to=None,global_attrs=None,variable_attrs=None,compress_netcdf=True,add_quality_flag=True,exclude_tone_calibration=None):
     # loop through each day of the deployment
     date_format = "%Y%m%d"
     delta = timedelta(days=1)
@@ -190,7 +190,10 @@ def run_pbp_hmd_gen_batch(json_base_dir=None,audio_base_dir=None,start=None,end=
             voltage_multiplier=voltage_multiplier,
             subset_to=subset_to,
             global_attrs=global_attrs,
-            variable_attrs=variable_attrs
+            variable_attrs=variable_attrs,
+            compress_netcdf=compress_netcdf,
+            add_quality_flag=add_quality_flag,
+            exclude_tone_calibration=exclude_tone_calibration,
         )
         start_date += delta
 
@@ -220,7 +223,7 @@ def run_pbp_main_plot(netcdf_dir, latlon=None, title="", ylim=0,cmlim=None, dpi=
     }
     run_main_plot(Namespace(**args))
 
-def process_dataset(yaml_file: Path):
+def process_dataset(yaml_file: Path, compress_netcdf: bool = True, add_quality_flag: bool = True, exclude_tone_calibration: int = None):
     # load config parameters from YAML file
     config = load_yaml_file(yaml_file)
 
@@ -252,6 +255,9 @@ def process_dataset(yaml_file: Path):
         subset_to=config['pbp_job_agent']['subset_to'],
         global_attrs=new_global_attrs_filename,
         variable_attrs=config['pbp_job_agent']['variable_attrs'],
+        compress_netcdf=compress_netcdf,
+        add_quality_flag=add_quality_flag,
+        exclude_tone_calibration=exclude_tone_calibration,
     )
 
     # Make daily plots
@@ -265,12 +271,12 @@ def process_dataset(yaml_file: Path):
 
 
 #@flow(name='pbp-job')
-def submit_job(yaml_files: list[Path]):
-    
+def submit_job(yaml_files: list[Path], compress_netcdf: bool = True, add_quality_flag: bool = True, exclude_tone_calibration: int = None):
+
     # Define multiple processes
     processes = []
     for i, yaml_file in enumerate(yaml_files):  # Creating one process per dataset
-        p = Process(target=process_dataset, args=(yaml_file,))
+        p = Process(target=process_dataset, args=(yaml_file, compress_netcdf, add_quality_flag, exclude_tone_calibration))
         processes.append(p)
         p.start()  # Start each process
 
