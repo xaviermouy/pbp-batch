@@ -4,9 +4,9 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import argparse
 from argparse import Namespace
-from pbp.main_meta_generator import run_main_meta_generator
-from pbp.main_hmb_generator import run_main_hmb_generator
-from pbp.main_plot import run_main_plot
+from pbp.meta_gen.main_meta_generator import run_main_meta_generator
+from pbp.hmb_gen.main_hmb_generator import run_main_hmb_generator
+from pbp.hmb_plot.main_plot import run_main_plot
 #from pbp.plotting import plot_dataset_summary
 import xarray as xr
 import matplotlib
@@ -65,10 +65,6 @@ def write_pbp_glabalAttributes_file(config):
     output_file = os.path.join(os.path.dirname(orig_file_name),config['pbp_job_agent']['output_prefix'] + 'globalAttributes_pbp.yaml')
     with open(output_file, "w") as file:
         yaml.dump(yaml_template, file, default_flow_style=False, sort_keys=False)
-    if os.name == "nt":
-        output_file = "file:\\\\\\" + output_file
-    if os.name == "posix":
-        output_file = "file:///" + output_file
     return output_file
 
     print(f"Generated YAML saved to: {output_file}")
@@ -78,19 +74,25 @@ def load_yaml_file(yaml_file):
     #yaml_file = str(yaml_file)
     with open(yaml_file, "r") as file:
         config = yaml.safe_load(file)
-    # Reformat paths to linux/windows and add the URI format (e.g. file:///) when needed
+    # Reformat paths and store original global_attrs path before any modification
     config['pbp_job_agent']['variable_attrs_orig'] = config['pbp_job_agent']['global_attrs']
     if os.name == "nt":
-        config['pbp_job_agent']['audio_base_dir'] = "file:\\\\\\" + format_path(config['pbp_job_agent']['audio_base_dir'])
-        config['pbp_job_agent']['global_attrs'] = "file:\\\\\\" + format_path(config['pbp_job_agent']['global_attrs'])
-        config['pbp_job_agent']['variable_attrs'] = "file:\\\\\\" + format_path(config['pbp_job_agent']['variable_attrs'])
+        # On Windows, use "file:" + forward-slash path so pbp meta-gen recognizes scheme as "file"
+        # (plain paths get scheme "c" which falls through to the S3 branch)
+        def to_file_uri(p):
+            return "file:" + Path(p).as_posix()
+        config['pbp_job_agent']['audio_base_dir'] = to_file_uri(config['pbp_job_agent']['audio_base_dir'])
+        config['pbp_job_agent']['global_attrs'] = to_file_uri(config['pbp_job_agent']['global_attrs'])
+        config['pbp_job_agent']['variable_attrs'] = to_file_uri(config['pbp_job_agent']['variable_attrs'])
     if os.name == "posix":
         config['pbp_job_agent']['audio_base_dir'] = "file:///" + format_path(config['pbp_job_agent']['audio_base_dir'])
         config['pbp_job_agent']['global_attrs'] = "file:///" + format_path(config['pbp_job_agent']['global_attrs'])
         config['pbp_job_agent']['variable_attrs'] = "file:///" + format_path(config['pbp_job_agent']['variable_attrs'])
 
     config['pbp_job_agent']['json_base_dir'] = format_path(config['pbp_job_agent']['json_base_dir'])
-    config['pbp_job_agent']['xml_dir'] = format_path(config['pbp_job_agent']['xml_dir'])
+    if config['pbp_job_agent'].get('xml_dir', ''):
+        print(f"WARNING: 'xml_dir' is defined in the YAML file but will be ignored. "
+              f"The current version of pbp does not use XML files for metadata generation.")
     config['pbp_job_agent']['nc_output_dir'] = format_path(config['pbp_job_agent']['nc_output_dir'])
     config['pbp_job_agent']['meta_output_dir'] = format_path(config['pbp_job_agent']['meta_output_dir'])
     config['pbp_job_agent']['log_dir'] = format_path(config['pbp_job_agent']['log_dir'])
@@ -100,7 +102,7 @@ def load_yaml_file(yaml_file):
         config['pbp_job_agent']['sensitivity_flat_value'] = None
     if config['pbp_job_agent']['voltage_multiplier'] == '':
         config['pbp_job_agent']['voltage_multiplier'] = None
-    config['pbp_job_agent']['output_prefix'] = config['pbp_job_agent']['output_prefix'] if config['pbp_job_agent']['output_prefix'].endswith('_') else s + '_'
+    config['pbp_job_agent']['output_prefix'] = config['pbp_job_agent']['output_prefix'] if config['pbp_job_agent']['output_prefix'].endswith('_') else config['pbp_job_agent']['output_prefix'] + '_'
     config['pbp_job_agent']['subset_to'] = [int(num) for num in config['pbp_job_agent']['subset_to'].split()]
     config['pbp_job_agent']['latlon'] = tuple(map(float, config['pbp_job_agent']['latlon'].split()))
     config['pbp_job_agent']['cmlim'] = tuple(map(float, config['pbp_job_agent']['cmlim'].split()))
@@ -108,13 +110,12 @@ def load_yaml_file(yaml_file):
     return config
 
 #@task(retries=5, retry_delay_seconds=5, name="PBP MetaGen")
-def run_pbp_meta_gen(recorder=None,uri=None,output_dir=None,json_base_dir=None,xml_dir=None,start=None,end=None,prefix=None):
+def run_pbp_meta_gen(recorder=None,uri=None,output_dir=None,json_base_dir=None,start=None,end=None,prefix=None):
     args ={
         "recorder": recorder,
         "uri": uri,
         "output_dir": output_dir,
         "json_base_dir": json_base_dir,
-        "xml_dir": xml_dir,
         "start": start,
         "end": end,
         "prefix":[prefix]
@@ -146,6 +147,10 @@ def run_pbp_hmd_gen(json_base_dir=None,audio_base_dir=None,date=None,output_dir=
         "audio_path_prefix": "",
         "compress_netcdf": False,
         "add_quality_flag": False,
+        "exclude_tone_calibration": None,
+        "input_file": None,
+        "timestamp_pattern": None,
+        "time_resolution": None,
     }
     args['download_dir'] = None
     args['set_global_attrs'] = None
@@ -228,7 +233,6 @@ def process_dataset(yaml_file: Path):
         uri=config['pbp_job_agent']['audio_base_dir'],
         output_dir=config['pbp_job_agent']['meta_output_dir'],
         json_base_dir=config['pbp_job_agent']['json_base_dir'],
-        xml_dir=config['pbp_job_agent']['xml_dir'],
         start=config['pbp_job_agent']['start'],
         end=config['pbp_job_agent']['end'],
         prefix=config['pbp_job_agent']['prefix'],

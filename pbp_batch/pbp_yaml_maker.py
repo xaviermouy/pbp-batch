@@ -27,7 +27,7 @@ from datetime import timedelta
 
 def configuration():
     # Deployment ID:
-    deploymentID = 'NEFSC_SBNMS_201811_SB03'
+    deploymentID = 'NEFSC_SBNMS_202212_SB01'
 
     # default parameters:
     default_gain_setting = 'GAIN_HIGH'  # default is deployment gain setting not in Makara
@@ -35,12 +35,29 @@ def configuration():
     audio_file_format = '.wav'
 
     # Specify the paths to Makara and servers paths
-    processing_queue_dir = r'C:\Users\xavier.mouy\Documents\GitHub\pbp-batch\test_outputs\results\processing_queue'
-    audio_root_dir = r'F:'
-    results_root_dir = r'C:\Users\xavier.mouy\Documents\GitHub\pbp-batch\test_outputs\results'
-    makara_xlsfile_path = r'C:\Users\xavier.mouy\Documents\Projects\2024_NERACOOS_Soundscape_GOM\Analysis\MAKARA_metadata_dump_20241031.xlsx'
-    variableAttributes_template_path = r'C:\Users\xavier.mouy\Documents\GitHub\pbp-batch\yaml_templates\variableAttributes_template.yaml'
-    globalAttributes_template_path = r'C:\Users\xavier.mouy\Documents\GitHub\pbp-batch\yaml_templates\pbpbatch_globalAttributes_template.yaml'
+    processing_queue_dir = r'X:\Xavier_Mouy\pbp-batch\Processing_queue'
+    audio_root_dir = r'Y:\bottom_mounted\NEFSC_SBNMS'
+    results_root_dir = r'Z:\PYTHON_SOUNDSCAPE_PYPAM\Raw\NEFSC_SBNMS'
+    makara_xlsfile_path = r'X:\Xavier_Mouy\pbp-batch\Makara_dump\MAKARA_metadata_dump_20241031.xlsx'
+    variableAttributes_template_path = r'X:\Xavier_Mouy\pbp-batch\YAML_templates\variableAttributes_template.yaml'
+    globalAttributes_template_path = r'X:\Xavier_Mouy\pbp-batch\YAML_templates\pbpbatch_globalAttributes_template.yaml'
+
+
+    # # Deployment ID:
+    # deploymentID = 'NEFSC_SBNMS_201901_SB01'
+    #
+    # # default parameters:
+    # default_gain_setting = 'GAIN_HIGH'  # default is deployment gain setting not in Makara
+    # fmin_hz = 10
+    # audio_file_format = '.wav'
+    #
+    # # Specify the paths to Makara and servers paths
+    # processing_queue_dir = r'C:\Users\xavier.mouy\Documents\GitHub\pbp-batch\test_outputs\results\processing_queue'
+    # audio_root_dir = r'F:'
+    # results_root_dir = r'C:\Users\xavier.mouy\Documents\GitHub\pbp-batch\test_outputs\results'
+    # makara_xlsfile_path = r'C:\Users\xavier.mouy\Documents\Projects\2024_NERACOOS_Soundscape_GOM\Analysis\MAKARA_metadata_dump_20241031.xlsx'
+    # variableAttributes_template_path = r'C:\Users\xavier.mouy\Documents\GitHub\pbp-batch\yaml_templates\variableAttributes_template.yaml'
+    # globalAttributes_template_path = r'C:\Users\xavier.mouy\Documents\GitHub\pbp-batch\yaml_templates\pbpbatch_globalAttributes_template.yaml'
 
     return deploymentID, audio_file_format, processing_queue_dir, default_gain_setting, fmin_hz, audio_root_dir, results_root_dir, makara_xlsfile_path, variableAttributes_template_path, globalAttributes_template_path
 
@@ -176,7 +193,7 @@ def get_metadata_from_makara(xls_file=None, deploymentID=None, sysgain_setting=N
     # retrieve device SN and sysgain
     device = devices[devices['device_code'] == makara['device']]
     try:
-        sysgain_setting_makara = eval(recording['recording_settings_json'])
+        sysgain_setting_makara = eval(recording['recording_settings_json'].values[0])
     except:
         sysgain_setting_makara = None
     if sysgain_setting_makara is None:
@@ -208,28 +225,28 @@ def main():
     os.makedirs(nc_outdir_path, exist_ok=True)
     os.makedirs(json_outdir_path, exist_ok=True)
 
-    # search for audio dir
-    tmp_audio_dir = search_folder_path(folder_name=deploymentID,search_root=audio_root_dir)
-    audio_folder_path, audio_count = find_folder_with_most_audio_files(search_root=str(tmp_audio_dir[0]), files_extension=audio_file_format)
-    if audio_folder_path:
-        print(f" Audio folder: {audio_folder_path} ({audio_count} files)")
-    else:
-        print("No audio folder found.")
-
-    # search for xml dir
-    xml_folder_path, xml_count = find_folder_with_most_audio_files(search_root=str(tmp_audio_dir[0]),                                                                   files_extension='.xml')
-    if audio_folder_path:
-        print(f" XML folder: {xml_folder_path} ({xml_count} files)")
-    else:
-        print("No XML folder found.")
-
-    # Find audio files prefix
-    example_of_audio_file_name = get_nth_wav_file(audio_folder_path, n=10)
-    audio_files_prefix = example_of_audio_file_name.stem.split('.')[0]
-
-    # Find sampling rate
-    info = sf.info(os.path.join(audio_folder_path,example_of_audio_file_name))
-    sampling_rate = info.samplerate
+    # # search for audio dir
+    # tmp_audio_dir = search_folder_path(folder_name=deploymentID,search_root=audio_root_dir)
+    # audio_folder_path, audio_count = find_folder_with_most_audio_files(search_root=str(tmp_audio_dir[0]), files_extension=audio_file_format)
+    # if audio_folder_path:
+    #     print(f" Audio folder: {audio_folder_path} ({audio_count} files)")
+    # else:
+    #     print("No audio folder found.")
+    #
+    # # search for xml dir
+    # xml_folder_path, xml_count = find_folder_with_most_audio_files(search_root=str(tmp_audio_dir[0]),                                                                   files_extension='.xml')
+    # if audio_folder_path:
+    #     print(f" XML folder: {xml_folder_path} ({xml_count} files)")
+    # else:
+    #     print("No XML folder found.")
+    #
+    # # Find audio files prefix
+    # example_of_audio_file_name = get_nth_wav_file(audio_folder_path, n=10)
+    # audio_files_prefix = example_of_audio_file_name.stem.split('.')[0]
+    #
+    # # Find sampling rate
+    # info = sf.info(os.path.join(audio_folder_path,example_of_audio_file_name))
+    # sampling_rate = info.samplerate
 
     # get metadata from Makara
     makara = get_metadata_from_makara(xls_file=makara_xlsfile_path, deploymentID=deploymentID, sysgain_setting=default_gain_setting)
