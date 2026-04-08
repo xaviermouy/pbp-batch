@@ -26,3 +26,14 @@ sensitivity:
   coverage_content_type: physicalMeasurement
   comment: >-
     As specified in the user manual, the SoundTrap 300, 400, and 600 hydrophone integrates the recorder and hydrophone in a single package, and the relationship between sound pressure and the resultant wav file data is fixed. A single calibration value is used to compute a converstion factor (10^[cal/20]) that is multiplied by wav data to convert to µPa.
+quality_flag:
+  long_name: Quality flag for hybrid millidecade band sound pressure levels
+  flag_values: 1 2 3 4 9
+  flag_meanings: good not_evaluated suspect bad missing
+  valid_min: 1
+  valid_max: 9
+  coverage_content_type: qualityInformation
+  comment: >-
+    Quality flag following QARTOD conventions: 1=Good, 2=Not evaluated,
+    3=Suspect, 4=Bad, 9=Missing.
+  references: https://cdn.ioos.noaa.gov/media/2017/12/QARTOD_PassiveAcousticsManual_Final_V1.0_signed.pdf
