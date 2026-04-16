@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pbp-batch"
-version = "0.0.2"
+version = "0.0.3"
 description = "Running mbari-pbp library for full deployments"
 authors = [
     { name = "Xavier Mouy", email = "xavier.mouy@whoi.edu" }
@@ -14,7 +14,14 @@ requires-python = ">=3.11, <3.12"
 dependencies = [
     "mbari-pbp==1.8.74",
     "prefect",
-	"soundfile",
+    "prefect-dask",
+    "pydantic>=2.0",
+    "pyyaml",
+    "pandas",
+    "matplotlib",
+    "bokeh>=2.4.2,!=3.0.*",
+    "soundfile",
+    "panel",
 ]
 
 classifiers = [
